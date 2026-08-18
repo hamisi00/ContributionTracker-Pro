@@ -24,7 +24,7 @@
       "dest": "/$1"
     },
     {
-      "src": "/(.*)",
+      "src": "/((?!.*\\.html$).*)",
       "dest": "/index.html"
     }
   ],
@@ -58,12 +58,6 @@
           "value": "/"
         }
       ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
     }
   ]
 }
