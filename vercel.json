@@ -1,15 +1,6 @@
 {
   "version": 2,
   "name": "contribution-tracker-pro",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "."
-      }
-    }
-  ],
   "routes": [
     {
       "src": "/sw.js",
