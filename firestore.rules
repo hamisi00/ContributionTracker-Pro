@@ -1,0 +1,172 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user is the owner/creator of organization
+    function isOwner(orgId) {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/organizations/$(orgId)).data.createdBy == request.auth.uid;
+    }
+
+    // ==========================================
+    // USERS
+    // ==========================================
+
+    match /users/{userId} {
+      // Users can read and write their own document
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
+
+      // Settings subcollection - users can read/write their own settings
+      match /settings/{settingDoc} {
+        allow read, write: if isAuthenticated() && request.auth.uid == userId;
+      }
+    }
+
+    // ==========================================
+    // ORGANIZATIONS
+    // ==========================================
+
+    match /organizations/{orgId} {
+      // Read: Authenticated users can read organizations they might be part of
+      allow read: if isAuthenticated();
+
+      // Create: Any authenticated user can create
+      allow create: if isAuthenticated();
+
+      // Update: Owner only (simplified)
+      allow update: if isOwner(orgId);
+
+      // Delete: Owner only
+      allow delete: if isOwner(orgId);
+    }
+
+    // ==========================================
+    // FUNDS (Top-level collection)
+    // ==========================================
+
+    match /funds/{fundId} {
+      // Read: Authenticated users can read (org check done in app)
+      allow read: if isAuthenticated();
+
+      // Create: Authenticated users can create
+      allow create: if isAuthenticated() &&
+                       request.resource.data.organizationId is string;
+
+      // Update/Delete: Owner of organization or creator of fund
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.organizationId) ||
+        resource.data.createdBy == request.auth.uid
+      );
+    }
+
+    // ==========================================
+    // GROUPS (Top-level collection)
+    // ==========================================
+
+    match /groups/{groupId} {
+      // Read: Authenticated users can read
+      allow read: if isAuthenticated();
+
+      // Create: Authenticated users can create
+      allow create: if isAuthenticated() &&
+                       request.resource.data.organizationId is string &&
+                       request.resource.data.fundId is string;
+
+      // Update/Delete: Owner of organization or creator
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.organizationId) ||
+        resource.data.createdBy == request.auth.uid
+      );
+    }
+
+    // ==========================================
+    // PAYMENTS (Top-level collection)
+    // ==========================================
+
+    match /payments/{paymentId} {
+      // Read: Authenticated users can read
+      allow read: if isAuthenticated();
+
+      // Create: Authenticated users can create
+      allow create: if isAuthenticated() &&
+                       request.resource.data.organizationId is string &&
+                       request.resource.data.fundId is string;
+
+      // Update/Delete: Owner of organization or creator
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.organizationId) ||
+        resource.data.createdBy == request.auth.uid
+      );
+    }
+
+    // ==========================================
+    // EXPENSES (Top-level collection)
+    // ==========================================
+
+    match /expenses/{expenseId} {
+      // Read: Authenticated users can read
+      allow read: if isAuthenticated();
+
+      // Create: Authenticated users can create
+      allow create: if isAuthenticated() &&
+                       request.resource.data.organizationId is string;
+
+      // Update/Delete: Owner of organization or creator
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.organizationId) ||
+        resource.data.createdBy == request.auth.uid
+      );
+    }
+
+    // ==========================================
+    // ACTIVITY LOGS (Top-level collection - Immutable)
+    // ==========================================
+
+    match /activityLogs/{logId} {
+      // Read: Authenticated users can read
+      allow read: if isAuthenticated();
+
+      // Create: Authenticated users can create activity logs
+      allow create: if isAuthenticated() &&
+                       request.resource.data.organizationId is string;
+
+      // Update/Delete: Not allowed (immutable logs)
+      allow update, delete: if false;
+    }
+
+    // ==========================================
+    // INVITATIONS
+    // ==========================================
+
+    match /invitations/{inviteId} {
+      // Read: Authenticated users can read invitations
+      allow read: if isAuthenticated();
+
+      // Create: Authenticated users can create invitations
+      allow create: if isAuthenticated();
+
+      // Update: Authenticated users can update (accept invitation)
+      allow update: if isAuthenticated();
+
+      // Delete: Authenticated users can delete
+      allow delete: if isAuthenticated();
+    }
+
+    // ==========================================
+    // DENY ALL OTHER ACCESS
+    // ==========================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

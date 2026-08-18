@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Firebase config
+.firebaserc
+
+# Development
+package.json
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db

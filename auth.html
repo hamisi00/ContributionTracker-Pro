@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - ContributionTracker Pro</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Auth-specific styles */
+        #authContainer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 440px;
+            width: 100%;
+            padding: 40px;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .auth-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .auth-header h1 {
+            color: #1a202c;
+            font-size: 28px;
+            margin: 0 0 8px 0;
+        }
+
+        .auth-header p {
+            color: #718096;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* Login Logo Structure */
+        .login-logo {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .login-logo h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .login-subtitle {
+            color: #718096;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .auth-form {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .auth-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .auth-button:active {
+            transform: translateY(0);
+        }
+
+        .auth-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .auth-divider {
+            text-align: center;
+            margin: 24px 0;
+            position: relative;
+        }
+
+        .auth-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .auth-divider span {
+            background: white;
+            padding: 0 16px;
+            position: relative;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .auth-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 24px;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #2f855a;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Password Visibility Toggle */
+        .password-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-input {
+            padding-right: 3rem !important;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #718096;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+        }
+
+        .password-toggle:hover {
+            background: rgba(113, 128, 150, 0.1);
+            color: #2d3748;
+        }
+
+        .eye-icon {
+            pointer-events: none;
+        }
+
+        /* Help/About Button */
+        .btn-help {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: white;
+            border: none;
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .auth-help-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        .btn-help:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Hash Generator Modal */
+        .hash-modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .hash-modal.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .hash-modal-content {
+            background: white;
+            margin: 3% auto;
+            padding: 0;
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hash-modal-header {
+            padding: 24px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hash-modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .hash-modal-close {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .hash-modal-close:hover {
+            transform: scale(1.2);
+        }
+
+        .hash-modal-body {
+            padding: 32px;
+        }
+
+        .hash-form-group {
+            margin-bottom: 20px;
+        }
+
+        .hash-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .hash-form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+
+        .hash-form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .hash-generate-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .hash-generate-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .hash-result-container {
+            margin-top: 24px;
+            padding: 20px;
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .hash-result-container.show {
+            display: block;
+        }
+
+        .hash-result-label {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .hash-output {
+            background: white;
+            padding: 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            word-break: break-all;
+            color: #2d3748;
+            margin-bottom: 12px;
+        }
+
+        .hash-copy-btn {
+            padding: 8px 16px;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .hash-copy-btn:hover {
+            background: #38a169;
+        }
+
+        .hash-copy-btn.copied {
+            background: #2f855a;
+        }
+
+        .hash-instructions {
+            margin-top: 24px;
+            padding: 16px;
+            background: #edf2f7;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #4a5568;
+        }
+
+        .hash-instructions strong {
+            color: #2d3748;
+        }
+
+        .hash-instructions code {
+            background: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div id="authContainer">
+        <div class="auth-card">
+            <!-- Sign In Form -->
+            <div id="signInForm" class="auth-form">
+                <button class="btn-help auth-help-btn" onclick="showAboutInfo()" title="About" type="button">?</button>
+
+                <div class="login-logo">
+                    <div class="logo-icon">💰</div>
+                    <h1 id="authTitle">ContributionTracker Pro</h1>
+                    <p class="login-subtitle" id="authSubtitle">Professional Contribution Management System</p>
+                </div>
+
+                <div id="signInError" class="error-message"></div>
+                <div id="signInSuccess" class="success-message"></div>
+
+                <form id="signInFormElement" onsubmit="return false;">
+                    <div class="form-group">
+                        <label for="signInEmail">Email Address</label>
+                        <input type="email" id="signInEmail" required placeholder="your@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signInPassword">Password</label>
+                        <div class="password-input-container">
+                            <input type="password" id="signInPassword" class="password-input" required placeholder="••••••••">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility(this)">
+                                <span class="eye-icon">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="auth-button" id="signInButton">Sign In</button>
+                </form>
+
+                <div class="auth-footer">
+                    <a href="#" class="auth-link" onclick="window.authHelpers.showResetPasswordForm(); return false;">Forgot password?</a>
+                    <span style="margin: 0 8px; color: #e2e8f0;">|</span>
+                    <a href="#" class="auth-link" onclick="window.authHelpers.showSignUpForm(); return false;">Create account</a>
+                </div>
+            </div>
+
+            <!-- Password Reset Form -->
+            <div id="resetPasswordForm" class="auth-form" style="display: none;">
+                <div class="auth-header">
+                    <h1>Reset Password</h1>
+                    <p>Enter your email to receive a password reset link</p>
+                </div>
+
+                <div id="resetError" class="error-message"></div>
+                <div id="resetSuccess" class="success-message"></div>
+
+                <form id="resetPasswordFormElement" onsubmit="return false;">
+                    <div class="form-group">
+                        <label for="resetEmail">Email Address</label>
+                        <input type="email" id="resetEmail" required placeholder="your@email.com">
+                    </div>
+
+                    <button type="submit" class="auth-button" id="resetButton">Send Reset Link</button>
+                </form>
+
+                <div class="auth-footer">
+                    <p><a href="#" class="auth-link" onclick="window.authHelpers.showSignInForm(); return false;">Back to sign in</a></p>
+                </div>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div id="signUpForm" class="auth-form" style="display: none;">
+                <div class="auth-header">
+                    <h1>Create Account</h1>
+                    <p>Sign up to start tracking contributions</p>
+                </div>
+
+                <div id="signUpError" class="error-message"></div>
+
+                <form id="signUpFormElement" onsubmit="return false;">
+                    <div class="form-group">
+                        <label for="signUpEmail">Email Address</label>
+                        <input type="email" id="signUpEmail" required placeholder="your@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signUpPassword">Password</label>
+                        <div class="password-input-container">
+                            <input type="password" id="signUpPassword" class="password-input" required placeholder="••••••••" minlength="6">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility(this)">
+                                <span class="eye-icon">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signUpConfirmPassword">Confirm Password</label>
+                        <div class="password-input-container">
+                            <input type="password" id="signUpConfirmPassword" class="password-input" required placeholder="••••••••" minlength="6">
+                            <button type="button" class="password-toggle" onclick="togglePasswordVisibility(this)">
+                                <span class="eye-icon">👁️</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="auth-button" id="signUpButton">Create Account</button>
+                </form>
+
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="#" class="auth-link" onclick="window.authHelpers.showSignInForm(); return false;">Sign in</a></p>
+                </div>
+            </div>
+
+            <!-- Organization Setup Form -->
+            <div id="contributionGroupSetupForm" class="auth-form" style="display: none;">
+                <div class="auth-header">
+                    <h1>Organization Setup</h1>
+                    <p id="setupSubtitle">Choose how to get started</p>
+                </div>
+
+                <div id="setupError" class="error-message"></div>
+                <div id="setupSuccess" class="success-message"></div>
+
+                <!-- Choice buttons -->
+                <div id="setupChoiceView">
+                    <button class="auth-button" onclick="showCreateGroupForm()" style="margin-bottom: 12px;">
+                        Create New Organization
+                    </button>
+                    <button class="auth-button" onclick="showJoinGroupForm()" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                        Join Existing Organization
+                    </button>
+
+                    <div class="auth-footer">
+                        <a href="#" class="auth-link" onclick="window.authHelpers.signOutAndReturn(); return false;">← Back</a>
+                    </div>
+                </div>
+
+                <!-- Create Organization Form -->
+                <div id="createGroupView" style="display: none;">
+                    <form id="createGroupFormElement" onsubmit="return false;">
+                        <div class="form-group">
+                            <label for="groupName">Organization Name</label>
+                            <input type="text" id="groupName" required placeholder="e.g., Community Building Fund">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="groupDescription">Description (Optional)</label>
+                            <input type="text" id="groupDescription" placeholder="e.g., Fundraising for new community center">
+                        </div>
+
+                        <button type="submit" class="auth-button" id="createGroupButton">Create Organization</button>
+                    </form>
+
+                    <div class="auth-footer">
+                        <a href="#" class="auth-link" onclick="showSetupChoice(); return false;">← Back</a>
+                    </div>
+                </div>
+
+                <!-- Join Organization Form -->
+                <div id="joinGroupView" style="display: none;">
+                    <form id="joinGroupFormElement" onsubmit="return false;">
+                        <div class="form-group">
+                            <label>Check for Pending Invitations</label>
+                            <p style="font-size: 14px; color: #4a5568; margin: 12px 0; line-height: 1.6;">
+                                To join an organization, you must first be invited by an organization admin via email. Click the button below to check for pending invitations.
+                            </p>
+                        </div>
+
+                        <button type="submit" class="auth-button" id="joinGroupButton" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">Check Invitations</button>
+                    </form>
+
+                    <div class="auth-footer">
+                        <a href="#" class="auth-link" onclick="showSetupChoice(); return false;">← Back</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="authLoading" class="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 16px; color: #718096;">Processing...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hash Generator Modal -->
+    <div id="hashModal" class="hash-modal">
+        <div class="hash-modal-content">
+            <div class="hash-modal-header">
+                <div>
+                    <h2 style="margin: 0 0 4px 0;">🔐 Generate Master Password Hash</h2>
+                    <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.9); font-weight: normal;">SHA-256 (Base64 Encoded)</p>
+                </div>
+                <button class="hash-modal-close" onclick="closeHashGenerator()">&times;</button>
+            </div>
+            <div class="hash-modal-body">
+                <div class="hash-form-group">
+                    <label for="hashPassword">Enter Master Password</label>
+                    <input type="text" id="hashPassword" placeholder="e.g., SecurePassword123!" autocomplete="off">
+                </div>
+
+                <button class="hash-generate-btn" onclick="generateHashForFirebase()">Generate SHA-256 Hash</button>
+
+                <div class="hash-result-container" id="hashResultContainer">
+                    <div class="hash-result-label">SHA-256 Hash (store this in Firebase):</div>
+                    <div class="hash-output" id="hashOutputDisplay"></div>
+                    <button class="hash-copy-btn" id="hashCopyButton" onclick="copyHashToClipboard()">Copy to Clipboard</button>
+                </div>
+
+                <div class="hash-instructions">
+                    <strong>Firebase Setup:</strong> Go to Firebase Console → Realtime Database → Add at root: <code>masterAdminPassword</code> = <strong>[paste hash]</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Modern ES Modules) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+    }
+    </script>
+
+    <!-- App Scripts -->
+    <script type="module">
+        import { initializeFirebase } from './firebase-config.js';
+        import {
+            signUp,
+            signIn,
+            signOutUser,
+            resetPassword,
+            onAuthStateChange,
+            getCurrentUser
+        } from './firebase-auth.js';
+        import {
+            createOrganization,
+            getMyOrganizations,
+            acceptInvitation,
+            getMyInvitations
+        } from './organization-manager.js';
+
+        // Initialize Firebase
+        let firebaseInitialized = false;
+
+        async function ensureFirebaseInitialized() {
+            if (!firebaseInitialized) {
+                try {
+                    await initializeFirebase();
+                    firebaseInitialized = true;
+                    console.log('✅ Firebase initialized');
+                } catch (error) {
+                    console.error('❌ Firebase initialization error:', error);
+                    showError('Failed to initialize Firebase. Please check your configuration.');
+                }
+            }
+        }
+
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', async () => {
+            await ensureFirebaseInitialized();
+
+            // Set up auth state listener
+            onAuthStateChange(async (user) => {
+                if (user) {
+                    // User is signed in
+                    const orgs = await getMyOrganizations();
+
+                    // Check if setup is forced via hash
+                    if (window.location.hash === '#setup') {
+                        showOrganizationSetup();
+                    } else if (orgs.length === 0) {
+                        // No organizations, show setup
+                        showOrganizationSetup();
+                    } else {
+                        // Has organizations, redirect to app
+                        window.location.href = 'index.html';
+                    }
+                } else {
+                    // User is signed out, show sign in form
+                    showSignInForm();
+                }
+            });
+        });
+
+        // Helper functions
+        function showError(message, elementId = 'signInError') {
+            const errorDiv = document.getElementById(elementId);
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function showSuccess(message, elementId) {
+            const successDiv = document.getElementById(elementId);
+            if (successDiv) {
+                successDiv.textContent = message;
+                successDiv.style.display = 'block';
+            }
+        }
+
+        function showSignInForm() {
+            document.getElementById('signInForm').style.display = 'block';
+            document.getElementById('signUpForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+            document.getElementById('contributionGroupSetupForm').style.display = 'none';
+        }
+
+        function showSignUpForm() {
+            document.getElementById('signInForm').style.display = 'none';
+            document.getElementById('signUpForm').style.display = 'block';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+            document.getElementById('contributionGroupSetupForm').style.display = 'none';
+        }
+
+        function showResetPasswordForm() {
+            document.getElementById('signInForm').style.display = 'none';
+            document.getElementById('signUpForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'block';
+            document.getElementById('contributionGroupSetupForm').style.display = 'none';
+        }
+
+        function showOrganizationSetup() {
+            document.getElementById('signInForm').style.display = 'none';
+            document.getElementById('signUpForm').style.display = 'none';
+            document.getElementById('resetPasswordForm').style.display = 'none';
+            document.getElementById('contributionGroupSetupForm').style.display = 'block';
+        }
+
+        // Export functions for onclick handlers
+        window.authHelpers = {
+            showSignInForm,
+            showSignUpForm,
+            showResetPasswordForm,
+            signOutAndReturn: async () => {
+                await signOutUser();
+                showSignInForm();
+            }
+        };
+
+        // Form submission handlers
+        document.getElementById('signInFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signInEmail').value;
+            const password = document.getElementById('signInPassword').value;
+            const errorDiv = document.getElementById('signInError');
+            const button = document.getElementById('signInButton');
+
+            button.disabled = true;
+            button.textContent = 'Signing in...';
+            errorDiv.style.display = 'none';
+
+            const result = await signIn(email, password);
+
+            if (!result.success) {
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
+                button.disabled = false;
+                button.textContent = 'Sign In';
+            }
+            // Success is handled by auth state listener
+        });
+
+        document.getElementById('signUpFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signUpEmail').value;
+            const password = document.getElementById('signUpPassword').value;
+            const confirmPassword = document.getElementById('signUpConfirmPassword').value;
+            const errorDiv = document.getElementById('signUpError');
+            const button = document.getElementById('signUpButton');
+
+            button.disabled = true;
+            button.textContent = 'Creating account...';
+            errorDiv.style.display = 'none';
+
+            // Validate password confirmation
+            if (password !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.style.display = 'block';
+                button.disabled = false;
+                button.textContent = 'Create Account';
+                return;
+            }
+
+            // Extract display name from email
+            const displayName = email.split('@')[0];
+            const result = await signUp(email, password, displayName);
+
+            if (!result.success) {
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
+                button.disabled = false;
+                button.textContent = 'Create Account';
+            }
+            // Success is handled by auth state listener
+        });
+
+        document.getElementById('resetPasswordFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+            const errorDiv = document.getElementById('resetError');
+            const successDiv = document.getElementById('resetSuccess');
+            const button = document.getElementById('resetButton');
+
+            button.disabled = true;
+            button.textContent = 'Sending...';
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            const result = await resetPassword(email);
+
+            if (result.success) {
+                successDiv.textContent = result.message || 'Password reset link sent! Check your email.';
+                successDiv.style.display = 'block';
+                document.getElementById('resetEmail').value = '';
+            } else {
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
+            }
+
+            button.disabled = false;
+            button.textContent = 'Send Reset Link';
+        });
+
+        document.getElementById('createGroupFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const groupName = document.getElementById('groupName').value;
+            const groupDescription = document.getElementById('groupDescription').value;
+            const errorDiv = document.getElementById('setupError');
+            const successDiv = document.getElementById('setupSuccess');
+            const button = document.getElementById('createGroupButton');
+
+            button.disabled = true;
+            button.textContent = 'Creating...';
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            const result = await createOrganization(groupName, groupDescription);
+
+            if (result.success) {
+                successDiv.textContent = `Success! Organization "${groupName}" created!`;
+                successDiv.style.display = 'block';
+
+                // Redirect to app after short delay
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            } else {
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
+                button.disabled = false;
+                button.textContent = 'Create Organization';
+            }
+        });
+
+        document.getElementById('joinGroupFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const inviteCode = document.getElementById('inviteCode').value.trim();
+            const errorDiv = document.getElementById('setupError');
+            const successDiv = document.getElementById('setupSuccess');
+            const button = document.getElementById('joinGroupButton');
+
+            button.disabled = true;
+            button.textContent = 'Checking invitations...';
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            // Get pending invitations for this user
+            const invitations = await getMyInvitations();
+
+            if (invitations.length === 0) {
+                errorDiv.textContent = 'No pending invitations found. Ask an organization admin to invite you via email.';
+                errorDiv.style.display = 'block';
+                button.disabled = false;
+                button.textContent = 'Check Invitations';
+                return;
+            }
+
+            // Accept the first pending invitation
+            button.textContent = 'Joining...';
+            const result = await acceptInvitation(invitations[0].id);
+
+            if (result.success) {
+                successDiv.textContent = `Successfully joined "${invitations[0].organizationName}"!`;
+                successDiv.style.display = 'block';
+
+                // Redirect to app after short delay
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            } else {
+                errorDiv.textContent = result.error;
+                errorDiv.style.display = 'block';
+                button.disabled = false;
+                button.textContent = 'Check Invitations';
+            }
+        });
+
+    </script>
+
+    <script>
+        // Toggle password visibility
+        function togglePasswordVisibility(button) {
+            const container = button.closest('.password-input-container');
+            const input = container.querySelector('.password-input');
+            const icon = button.querySelector('.eye-icon');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                icon.textContent = '👁️';
+            }
+        }
+
+        // Show about info
+        function showAboutInfo() {
+            alert('ContributionTracker Pro v1.2.0\n\nProfessional contribution tracking and fund management system with multi-user collaboration.\n\nDeveloped by Hamster Innovations');
+        }
+
+        // Setup form navigation
+        function showCreateGroupForm() {
+            document.getElementById('setupChoiceView').style.display = 'none';
+            document.getElementById('createGroupView').style.display = 'block';
+            document.getElementById('joinGroupView').style.display = 'none';
+        }
+
+        function showJoinGroupForm() {
+            document.getElementById('setupChoiceView').style.display = 'none';
+            document.getElementById('createGroupView').style.display = 'none';
+            document.getElementById('joinGroupView').style.display = 'block';
+        }
+
+        function showSetupChoice() {
+            document.getElementById('setupChoiceView').style.display = 'block';
+            document.getElementById('createGroupView').style.display = 'none';
+            document.getElementById('joinGroupView').style.display = 'none';
+        }
+
+        function backToSignIn() {
+            window.authManager.signOut();
+        }
+
+        // Hash generator functions
+        function openHashGenerator() {
+            document.getElementById('hashModal').classList.add('show');
+        }
+
+        function closeHashGenerator() {
+            document.getElementById('hashModal').classList.remove('show');
+            document.getElementById('hashPassword').value = '';
+            document.getElementById('hashResultContainer').classList.remove('show');
+        }
+
+        async function generateHashForFirebase() {
+            const password = document.getElementById('hashPassword').value;
+            if (!password) {
+                alert('Please enter a password');
+                return;
+            }
+
+            try {
+                // Generate SHA-256 hash
+                const encoder = new TextEncoder();
+                const data = encoder.encode(password);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+                // Convert to base64
+                const base64Hash = btoa(String.fromCharCode.apply(null, hashArray));
+
+                // Display result
+                document.getElementById('hashOutputDisplay').textContent = base64Hash;
+                document.getElementById('hashResultContainer').classList.add('show');
+            } catch (error) {
+                alert('Error generating hash: ' + error.message);
+            }
+        }
+
+        function copyHashToClipboard() {
+            const hashOutput = document.getElementById('hashOutputDisplay').textContent;
+            navigator.clipboard.writeText(hashOutput).then(() => {
+                const btn = document.getElementById('hashCopyButton');
+                btn.textContent = 'Copied!';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'Copy to Clipboard';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

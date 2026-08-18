@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#667eea">
+    <meta name="description" content="Track financial contributions toward common goals with flexible fund management">
+
+    <title>ContributionTracker Pro</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="icons/value.png">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Preload Scripts -->
+    <link rel="preload" href="db-manager.js" as="script">
+    <link rel="preload" href="modules.js" as="script">
+    <link rel="preload" href="app.js" as="script">
+</head>
+<body>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator hidden">
+        <span>🔴 You're offline. Changes will be saved locally.</span>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="spinner"></div>
+    </div>
+
+
+    <!-- Main App Container (hidden by default until authenticated) -->
+    <div class="app-container" id="appContainer" style="display: none;">
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <button class="btn btn-sm" id="menuToggle" title="Toggle Menu">
+                    <span class="btn-icon">☰</span>
+                </button>
+                <h1 id="appName">ContributionTracker Pro</h1>
+                <!-- Organization Name Badge -->
+            </div>
+            <div class="header-right">
+                <!-- Sync Status Pill -->
+                <div class="sync-status connected" id="syncStatus" title="Connection status">
+                    <span class="sync-icon">🟢</span>
+                    <span class="sync-text">Connected</span>
+                </div>
+                <button class="btn btn-sm btn-outline" id="logoutBtn" style="margin-right: 1rem;">
+                    <span class="btn-icon">🚪</span>
+                    Logout
+                </button>
+                <div class="theme-toggle">
+                    <button class="theme-btn active" id="lightThemeBtn" data-theme="light" title="Light Theme">
+                        <svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="4"/>
+                            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 6.34L4.93 4.93M19.07 19.07l-1.41-1.41"/>
+                        </svg>
+                    </button>
+                    <button class="theme-btn" id="darkThemeBtn" data-theme="dark" title="Dark Theme">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Sidebar Navigation -->
+            <nav class="sidebar" id="sidebar">
+                <div class="nav-section">
+                    <div class="nav-section-title">Main</div>
+                    <a href="#" class="nav-item active" data-section="dashboard">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="funds">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-text">Funds</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Management</div>
+                    <a href="#" class="nav-item" data-section="payments">
+                        <span class="nav-icon">💳</span>
+                        <span class="nav-text">Payments</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="expenses">
+                        <span class="nav-icon">💰</span>
+                        <span class="nav-text">Expenses</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="reports">
+                        <span class="nav-icon">📈</span>
+                        <span class="nav-text">Analytics</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Tools</div>
+                    <a href="#" class="nav-item" data-section="calculator">
+                        <span class="nav-icon">🧮</span>
+                        <span class="nav-text">Calculator</span>
+                    </a>
+                    <a href="#" class="nav-item" data-section="settings">
+                        <span class="nav-icon">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </a>
+                </div>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="content" id="mainContent">
+
+                <!-- Dashboard Panel -->
+                <section id="dashboardPanel" class="panel active">
+                    <div class="section-header flex-between mb-lg">
+                        <h2>Dashboard</h2>
+                        <button class="btn btn-primary" id="btnNewFund">
+                            <span class="btn-icon">➕</span>
+                            New Fund
+                        </button>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="grid grid-5 mb-lg">
+                        <div class="metric-card primary">
+                            <div class="metric-header">
+                                <h3>Total Funds</h3>
+                                <span class="metric-icon">💼</span>
+                            </div>
+                            <div class="metric-value" id="statTotalFunds">0</div>
+                            <div class="metric-change">Active funds</div>
+                        </div>
+
+                        <div class="metric-card success">
+                            <div class="metric-header">
+                                <h3>Total Collected</h3>
+                                <span class="metric-icon">💵</span>
+                            </div>
+                            <div class="metric-value" id="statTotalCollected">Ksh 0</div>
+                            <div class="metric-change">Across all funds</div>
+                        </div>
+
+                        <div class="metric-card pledge">
+                            <div class="metric-header">
+                                <h3>Total Pledged</h3>
+                                <span class="metric-icon">🤝</span>
+                            </div>
+                            <div class="metric-value" id="statTotalPledged">Ksh 0</div>
+                            <div class="metric-change">Future commitments</div>
+                        </div>
+
+                        <div class="metric-card info">
+                            <div class="metric-header">
+                                <h3>Total Payments</h3>
+                                <span class="metric-icon">📝</span>
+                            </div>
+                            <div class="metric-value" id="statTotalPayments">0</div>
+                            <div class="metric-change">Payment records</div>
+                        </div>
+
+                        <div class="metric-card warning">
+                            <div class="metric-header">
+                                <h3>Expenses This Month</h3>
+                                <span class="metric-icon">💸</span>
+                            </div>
+                            <div class="metric-value" id="statExpensesThisMonth">Ksh 0</div>
+                            <div class="metric-change">Current month</div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Funds -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Funds</h3>
+                        </div>
+                        <div class="card-body">
+                            <div id="recentFundsList">
+                                <div class="text-center" style="padding: 2rem; color: var(--text-tertiary);">
+                                    <div style="font-size: 3rem; margin-bottom: 1rem;">💰</div>
+                                    <p>No funds yet. Create your first fund to get started!</p>
+                                    <button class="btn btn-primary mt-md" onclick="document.getElementById('btnNewFund').click()">
+                                        Create First Fund
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Funds Panel -->
+                <section id="fundsPanel" class="panel hidden">
+                    <div class="section-header flex-between mb-lg">
+                        <h2>Funds</h2>
+                        <div class="flex flex-gap-md">
+                            <input type="text" id="searchFunds" class="form-control" placeholder="Search funds..." style="width: 300px;">
+                            <button class="btn btn-primary" id="btnNewFundFromFunds">
+                                <span class="btn-icon">➕</span>
+                                New Fund
+                            </button>
+                            <button class="btn btn-danger" id="btnDeleteFund">
+                                <span class="btn-icon">🗑️</span>
+                                Delete Fund
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Funds Stats Cards -->
+                    <div id="fundsStatsCards" class="grid grid-5 mb-lg">
+                        <!-- Stats cards will be populated here -->
+                    </div>
+
+                    <div id="fundsList" class="grid grid-1">
+                        <!-- Funds will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Fund Detail Panel -->
+                <section id="fundDetailPanel" class="panel hidden">
+                    <div class="section-header flex-between mb-lg">
+                        <div class="flex flex-gap-md" style="align-items: center;">
+                            <button class="btn btn-sm btn-outline" id="btnBackToFunds">
+                                <span class="btn-icon">←</span>
+                                Back
+                            </button>
+                            <div>
+                                <h2 id="fundDetailName">Fund Name</h2>
+                                <span class="badge badge-primary" id="fundDetailType">Type</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-gap-sm">
+                            <button class="btn btn-sm btn-outline" id="btnSwitchFundType">
+                                <span class="btn-icon">🔄</span>
+                                Switch Type
+                            </button>
+                            <button class="btn btn-sm btn-success" id="btnAddGroup">
+                                <span class="btn-icon">➕</span>
+                                Add Group
+                            </button>
+                            <button class="btn btn-sm btn-danger" id="btnDeleteGroup">
+                                <span class="btn-icon">🗑️</span>
+                                Delete Group
+                            </button>
+                            <button class="btn btn-sm btn-primary" id="btnAddPayment">
+                                <span class="btn-icon">💳</span>
+                                Add Payment
+                            </button>
+                            <button class="btn btn-sm btn-primary" id="btnAddPledge" style="background: var(--gradient-pledge);">
+                                <span class="btn-icon">🤝</span>
+                                Add Pledge
+                            </button>
+                            <button class="btn btn-sm btn-secondary" id="btnExportFund">
+                                <span class="btn-icon">📥</span>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Fund Overview Card -->
+                    <div class="card mb-lg" id="fundOverviewCard">
+                        <!-- Will be populated dynamically -->
+                    </div>
+
+                    <!-- Groups Section -->
+                    <div class="card">
+                        <div class="card-header flex-between">
+                            <h3>Groups</h3>
+                            <div class="filter-pills" id="sortGroupsFilters">
+                                <button class="filter-pill alphabetical active" data-sort="alphabetical">
+                                    📝 Alphabetical
+                                </button>
+                                <button class="filter-pill most-contributed" data-sort="most-contributed">
+                                    🏆 Most Contributed
+                                </button>
+                                <button class="filter-pill least-contributed" data-sort="least-contributed">
+                                    📊 Least Contributed
+                                </button>
+                                <button class="filter-pill most-recent" data-sort="most-recent">
+                                    ⏰ Most Recent
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="groupsList">
+                                <!-- Groups will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Payments Panel -->
+                <section id="paymentsPanel" class="panel hidden">
+                    <div class="section-header flex-between mb-lg">
+                        <h2>All Payments</h2>
+                        <div class="flex flex-gap-md">
+                            <input type="text" id="searchPayments" class="form-control" placeholder="Search payments..." style="width: 300px;">
+                            <button class="btn btn-secondary" id="btnExportPayments">
+                                <span class="btn-icon">📥</span>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Payments Stats Cards -->
+                    <div id="paymentsStatsCards" class="grid grid-4 mb-lg">
+                        <!-- Stats cards will be populated here -->
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="paymentsList">
+                                <!-- Payments will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Expenses Panel -->
+                <section id="expensesPanel" class="panel hidden">
+                    <!-- Section Header with Actions -->
+                    <div class="section-header flex-between mb-lg">
+                        <h2>Expenses Management</h2>
+                        <div class="flex flex-gap-md">
+                            <button class="btn btn-primary" id="btnAddExpense">
+                                <span class="btn-icon">➕</span>
+                                Add Expense
+                            </button>
+                            <button class="btn btn-secondary" id="btnExportExpenses">
+                                <span class="btn-icon">📥</span>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Expenses Stats Cards -->
+                    <div id="expensesStatsCards" class="grid grid-4 mb-lg">
+                        <!-- Stats cards will be populated here -->
+                    </div>
+
+                    <!-- Expense Categories & Filters Card -->
+                    <div class="card mb-lg">
+                        <div class="card-header">
+                            <h3>Expense Categories & Filters</h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- Category Filter Pills -->
+                            <div class="expense-category-pills mb-md">
+                                <button class="expense-pill active" data-category="all">
+                                    📊 All
+                                </button>
+                                <button class="expense-pill" data-category="supplies">
+                                    📦 Supplies
+                                </button>
+                                <button class="expense-pill" data-category="maintenance">
+                                    🔧 Maintenance
+                                </button>
+                                <button class="expense-pill" data-category="utilities">
+                                    ⚡ Utilities
+                                </button>
+                                <button class="expense-pill" data-category="management">
+                                    💼 Management
+                                </button>
+                                <button class="expense-pill" data-category="other">
+                                    📌 Other
+                                </button>
+                                <div class="expense-pill amount-pill">
+                                    <span id="categoryAmountDisplay">Total: KES 0</span>
+                                </div>
+                            </div>
+
+                            <!-- Date Filters and Search -->
+                            <div class="expense-filters">
+                                <div class="expense-filters-row">
+                                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                        <label for="expenseStartDate">From Date</label>
+                                        <input type="date" id="expenseStartDate" class="form-control">
+                                    </div>
+                                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                                        <label for="expenseEndDate">To Date</label>
+                                        <input type="date" id="expenseEndDate" class="form-control">
+                                    </div>
+                                    <div class="form-group" style="flex: 2; margin-bottom: 0;">
+                                        <label for="expenseSearch">Search</label>
+                                        <input type="text" id="expenseSearch" class="form-control" placeholder="Search expenses...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expenses Table -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Category</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Vendor</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expensesTableBody">
+                                        <tr>
+                                            <td colspan="6" class="text-center" style="padding: 3rem; color: var(--text-secondary);">
+                                                No expenses recorded yet. Click "Add Expense" to get started.
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Analytics Panel -->
+                <section id="reportsPanel" class="panel hidden">
+                    <div class="section-header flex-between mb-lg">
+                        <h2>📈 Analytics Dashboard</h2>
+                        <div class="flex flex-gap-sm">
+                            <button class="btn btn-sm btn-outline" id="btnRefreshAnalytics">
+                                <span class="btn-icon">🔄</span>
+                                Refresh
+                            </button>
+                            <button class="btn btn-sm btn-outline" id="btnAnalyticsDateRange">
+                                <span class="btn-icon">📅</span>
+                                <span id="analyticsDateRangeText">All Time</span>
+                            </button>
+                            <button class="btn btn-sm btn-secondary" id="btnExportAnalytics">
+                                <span class="btn-icon">📥</span>
+                                Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Stats Cards -->
+                    <div id="analyticsStatsCards" class="grid grid-5 mb-lg">
+                        <!-- Stats cards will be populated here -->
+                    </div>
+
+                    <!-- Charts & Graphs Section -->
+                    <div class="charts-section">
+                        <div class="section-title mb-md">
+                            <h3>📊 Visual Analytics</h3>
+                            <span class="section-subtitle">Interactive charts and performance metrics</span>
+                        </div>
+
+                        <!-- Primary Charts Row -->
+                        <div class="grid grid-2 mb-md">
+                            <!-- Funds Performance Chart -->
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h4>💰 Funds Performance</h4>
+                                    <span class="chart-subtitle">Collection progress by fund</span>
+                                </div>
+                                <div class="card-body chart-container">
+                                    <canvas id="fundsPerformanceChart" height="250"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Payment Timeline Chart -->
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h4>📈 Payment Trends</h4>
+                                    <span class="chart-subtitle">Payment activity over time</span>
+                                </div>
+                                <div class="card-body chart-container">
+                                    <canvas id="paymentTimelineChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Secondary Charts Row -->
+                        <div class="grid grid-2 mb-md">
+                            <!-- Expense Breakdown Chart -->
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h4>💸 Expense Breakdown</h4>
+                                    <span class="chart-subtitle">Expenses by category</span>
+                                </div>
+                                <div class="card-body chart-container">
+                                    <canvas id="expenseBreakdownChart" height="250"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Groups Contribution Chart -->
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h4>👥 Top Contributors</h4>
+                                    <span class="chart-subtitle">Top 10 contributing groups</span>
+                                </div>
+                                <div class="card-body chart-container">
+                                    <canvas id="groupsContributionChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Full Width Charts -->
+                        <div class="mb-md">
+                            <!-- Collections vs Expenses Chart -->
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h4>💹 Collections vs Expenses Trend</h4>
+                                    <span class="chart-subtitle">Compare income and spending over time</span>
+                                </div>
+                                <div class="card-body chart-container">
+                                    <canvas id="collectionsVsExpensesChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-lg">
+                            <!-- Fund Progress Overview -->
+                            <div class="card chart-card">
+                                <div class="card-header">
+                                    <h4>🎯 Fund Progress Overview</h4>
+                                    <span class="chart-subtitle">Overall completion status</span>
+                                </div>
+                                <div class="card-body chart-container">
+                                    <canvas id="fundProgressChart" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Breakdowns Section -->
+                    <div class="breakdowns-section">
+                        <div class="section-title mb-md">
+                            <h3>📋 Detailed Breakdowns</h3>
+                            <span class="section-subtitle">In-depth analysis and statistics</span>
+                        </div>
+
+                        <div class="grid grid-1 mb-md">
+                            <!-- Top Contributing Groups Table -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4>🏆 Top Contributing Groups</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table" id="topGroupsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Rank</th>
+                                                    <th>Group Name</th>
+                                                    <th>Fund</th>
+                                                    <th>Total Paid</th>
+                                                    <th>Pledged</th>
+                                                    <th>Total</th>
+                                                    <th>Remaining</th>
+                                                    <th>% of Fund</th>
+                                                    <th>Progress</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="topGroupsTableBody">
+                                                <tr>
+                                                    <td colspan="9" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
+                                                        No data available
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fund Performance Table -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4>📊 Fund Performance Overview</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table" id="fundsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Fund Name</th>
+                                                    <th>Type</th>
+                                                    <th>Goal</th>
+                                                    <th>Collected</th>
+                                                    <th>Pledged</th>
+                                                    <th>Total</th>
+                                                    <th>Remaining</th>
+                                                    <th>Progress</th>
+                                                    <th>Groups</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="fundsTableBody">
+                                                <tr>
+                                                    <td colspan="9" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
+                                                        No funds available
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Monthly Summary Table -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4>📅 Monthly Summary</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table" id="monthlySummaryTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Collections</th>
+                                                    <th>Expenses</th>
+                                                    <th>Net</th>
+                                                    <th>Change</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="monthlySummaryTableBody">
+                                                <tr>
+                                                    <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
+                                                        No monthly data available
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pledge Analytics Section -->
+                        <div class="section-title mb-md mt-lg">
+                            <h3>🤝 Pledge Analytics</h3>
+                            <span class="section-subtitle">Commitment tracking and fulfillment</span>
+                        </div>
+
+                        <div class="grid grid-2 mb-md">
+                            <!-- Pledge Fulfillment Chart -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4>📈 Pledge Fulfillment by Fund</h4>
+                                    <span class="chart-subtitle">Comparison of pledged vs collected amounts</span>
+                                </div>
+                                <div class="card-body chart-container">
+                                    <canvas id="pledgeFulfillmentChart" height="250"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Outstanding Pledges Table -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h4>💍 Outstanding Pledges</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table" id="outstandingPledgesTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Group</th>
+                                                    <th>Fund</th>
+                                                    <th>Amount</th>
+                                                    <th>Description</th>
+                                                    <th>Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="outstandingPledgesTableBody">
+                                                <tr>
+                                                    <td colspan="5" class="text-center" style="padding: 2rem; color: var(--text-secondary);">
+                                                        No outstanding pledges
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Settings Panel -->
+                <section id="settingsPanel" class="panel hidden">
+                    <div class="section-header mb-lg">
+                        <h2>Settings</h2>
+                    </div>
+
+                    <div class="card mb-lg">
+                        <div class="card-header">
+                            <h3>App Customization</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="settingAppName">App Name</label>
+                                <input type="text" id="settingAppName" class="form-control" placeholder="Enter app name">
+                                <small style="color: var(--text-tertiary); margin-top: 0.25rem; display: block;">
+                                    This name will appear in the header and throughout the app.
+                                </small>
+                            </div>
+                            <button class="btn btn-primary" id="btnSaveAppName">
+                                <span class="btn-icon">💾</span>
+                                Save App Name
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Security & Access Section -->
+                    <div class="card mb-lg">
+                        <div class="card-header">
+                            <h3>🔐 Security & Access</h3>
+                        </div>
+                        <div class="card-body">
+                            <div style="background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1)); border-left: 4px solid #667eea; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                                <h4 style="margin: 0 0 0.5rem 0; color: #667eea;">
+                                    🔒 Firebase Authentication Enabled
+                                </h4>
+                                <p style="margin: 0; color: var(--text-secondary); line-height: 1.6;">
+                                    Your account is now secured with <strong>Firebase Authentication</strong>.
+                                    All authentication and security features are managed through Firebase's secure platform.
+                                </p>
+                            </div>
+
+                            <div style="background: var(--background-secondary); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                                <h5 style="margin: 0 0 0.75rem 0; font-size: 0.9rem;">ℹ️ Account Management</h5>
+                                <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;">
+                                    To update your email or password, please use the authentication page (<strong>auth.html</strong>)
+                                    or your Firebase project console. Firebase provides password reset via email and secure account management.
+                                </p>
+                            </div>
+
+                            <!-- DEPRECATED: Local credential management removed -->
+                            <!-- Firebase Auth now handles all authentication -->
+                        </div>
+                    </div>
+
+                    <!-- Backend Integration Section -->
+                    <div class="card mb-lg">
+                        <div class="card-header">
+                            <h3>🔗 Backend Integration</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                                Connect to Google Sheets for cloud backup and synchronization
+                            </p>
+
+                            <div class="form-group">
+                                <label for="googleAppsScriptUrl">Google Apps Script Web App URL</label>
+                                <input type="url" id="googleAppsScriptUrl" class="form-control"
+                                       placeholder="https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec">
+                                <small style="color: var(--text-tertiary); margin-top: 0.25rem; display: block;">
+                                    Deploy your Google Apps Script and paste the Web App URL here
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="googleSpreadsheetId">Google Spreadsheet ID</label>
+                                <input type="text" id="googleSpreadsheetId" class="form-control"
+                                       placeholder="1Abc...XYZ789">
+                                <small style="color: var(--text-tertiary); margin-top: 0.25rem; display: block;">
+                                    Find this in your Google Sheets URL between /d/ and /edit
+                                </small>
+                            </div>
+
+                            <div class="connection-status" id="connectionStatus" style="display: none;">
+                                <span class="status-icon">✅</span>
+                                <span class="status-text">Connected to Google Sheets</span>
+                            </div>
+
+                            <div class="backend-pills-container">
+                                <button class="backend-pill pill-connect" onclick="app.connectBackend()">
+                                    🔗 Connect
+                                </button>
+                                <button class="backend-pill pill-test" onclick="app.testBackendConnection()">
+                                    ✅ Test Connection
+                                </button>
+                                <button class="backend-pill pill-setup" onclick="app.setupBackend()">
+                                    🏗️ Setup Sheets
+                                </button>
+                                <button class="backend-pill pill-sync" onclick="app.syncWithBackend()">
+                                    🔄 Sync All Data
+                                </button>
+                                <button class="backend-pill pill-pull" onclick="app.pullFromSheets()">
+                                    ⬇️ Pull from Sheets
+                                </button>
+                                <button class="backend-pill pill-unlink" onclick="app.unlinkBackend()" style="background: linear-gradient(135deg, #ef4444, #dc2626); border-color: #dc2626;">
+                                    🔓 Unlink Backend
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Firebase Cloud Sync Section -->
+                    <div class="card mb-lg">
+                        <div class="card-header">
+                            <h3>☁️ Firebase Cloud Sync</h3>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                                Migrate your local data to Firebase cloud storage for multi-device and multi-user access
+                            </p>
+                            <button class="btn btn-primary" id="btnMigrateToFirebase">
+                            <div class="data-management-section">
+                                <h4 class="section-subtitle">Export & Backup</h4>
+                                <div class="data-pills-container">
+                                    <button class="data-pill" id="btnExportAllData">
+                                        <div class="data-pill-icon">📥</div>
+                                        <div class="data-pill-content">
+                                            <div class="data-pill-label">Export All Data</div>
+                                            <div class="data-pill-description">Download complete backup with all data</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Import & Restore Section -->
+                            <div class="data-management-section">
+                                <h4 class="section-subtitle">Import & Restore</h4>
+                                <div class="data-pills-container">
+                                    <button class="data-pill" id="btnImportData">
+                                        <div class="data-pill-icon">📤</div>
+                                        <div class="data-pill-content">
+                                            <div class="data-pill-label">Import Data</div>
+                                            <div class="data-pill-description">Import data from file</div>
+                                        </div>
+                                    </button>
+                                    <button class="data-pill" id="btnRestoreBackup">
+                                        <div class="data-pill-icon">🔄</div>
+                                        <div class="data-pill-content">
+                                            <div class="data-pill-label">Restore Backup</div>
+                                            <div class="data-pill-description">Restore from backup file</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- System Maintenance Section -->
+                            <div class="data-management-section">
+                                <h4 class="section-subtitle">System Maintenance</h4>
+                                <div class="data-pills-container">
+                                    <button class="data-pill danger-pill" id="btnClearData">
+                                        <div class="data-pill-icon">🗑️</div>
+                                        <div class="data-pill-content">
+                                            <div class="data-pill-label">Clear All Data</div>
+                                            <div class="data-pill-description">Delete all stored data</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- Calculator Panel -->
+                <section id="calculatorPanel" class="panel hidden">
+                    <div class="section-header mb-lg">
+                        <h2>🧮 Calculator</h2>
+                    </div>
+
+                    <div class="calculator-container">
+                        <div class="calculator-card">
+                            <div class="calculator-display" id="calculatorDisplay">0</div>
+
+                            <div class="calculator-buttons">
+                                <button class="calc-btn calc-clear" onclick="app.calculatorClear()">C</button>
+                                <button class="calc-btn calc-operator" onclick="app.calculatorInput('/')">/</button>
+                                <button class="calc-btn calc-operator" onclick="app.calculatorInput('*')">×</button>
+                                <button class="calc-btn calc-operator" onclick="app.calculatorDelete()">⌫</button>
+
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('7')">7</button>
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('8')">8</button>
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('9')">9</button>
+                                <button class="calc-btn calc-operator" onclick="app.calculatorInput('-')">-</button>
+
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('4')">4</button>
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('5')">5</button>
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('6')">6</button>
+                                <button class="calc-btn calc-operator" onclick="app.calculatorInput('+')">+</button>
+
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('1')">1</button>
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('2')">2</button>
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('3')">3</button>
+                                <button class="calc-btn calc-equals" onclick="app.calculatorEquals()" style="grid-row: span 2">=</button>
+
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('0')" style="grid-column: span 2">0</button>
+                                <button class="calc-btn calc-number" onclick="app.calculatorInput('.')">.</button>
+                            </div>
+                        </div>
+
+                        <div class="calculator-history">
+                            <h3>Recent Calculations</h3>
+                            <div id="calculatorHistory" class="history-list">
+                                <div class="history-empty">No calculations yet</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- Create Organization Modal -->
+    <div id="createOrgModal" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>Create New Organization</h3>
+                <button class="modal-close" onclick="document.getElementById('createOrgModal').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createOrgForm">
+                    <div class="form-group">
+                        <label for="newOrgName">Organization Name <span class="required">*</span></label>
+                        <input type="text" id="newOrgName" class="form-control" required placeholder="e.g., My Company, Family Fund">
+                    </div>
+                    <div class="form-group">
+                        <label for="newOrgDescription">Description (optional)</label>
+                        <textarea id="newOrgDescription" class="form-control" rows="3" placeholder="Brief description of this organization"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-outline" onclick="document.getElementById('createOrgModal').style.display='none'">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Organization</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sync Details Modal -->
+    <div id="syncDetailsModal" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>Sync Status</h3>
+                <button class="modal-close" onclick="document.getElementById('syncDetailsModal').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="sync-detail-item">
+                    <span class="sync-detail-label">Status:</span>
+                    <span id="syncDetailStatus" class="sync-detail-value">Offline</span>
+                </div>
+                <div class="sync-detail-item">
+                    <span class="sync-detail-label">Last Sync:</span>
+                    <span id="syncDetailLastSync" class="sync-detail-value">Never</span>
+                </div>
+                <div class="sync-detail-item">
+                    <span class="sync-detail-label">Pending Changes:</span>
+                    <span id="syncDetailPending" class="sync-detail-value">0</span>
+                </div>
+                <div id="syncDetailError" class="sync-error-message" style="display: none;">
+                    <strong>Error:</strong> <span id="syncErrorText"></span>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="document.getElementById('syncDetailsModal').style.display='none'">Close</button>
+                    <button class="btn btn-primary" id="forceSyncBtn">
+                        <span class="btn-icon">🔄</span>
+                        Force Sync Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Universal Modal Container -->
+    <div id="modalContainer"></div>
+
+    <!-- Inline Scripts -->
+    <script>
+        // Global password toggle function (inline to ensure availability for onclick handlers)
+        function togglePasswordVisibility(button) {
+            const input = button.parentElement.querySelector('.password-input');
+            const eyeIcon = button.querySelector('.eye-icon');
+
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    eyeIcon.textContent = '🙈';
+                } else {
+                    input.type = 'password';
+                    eyeIcon.textContent = '👁️';
+                }
+            }
+        }
+    </script>
+
+    <!-- Firebase SDK (Modern ES Modules) -->
+    <script type="importmap">
+    {
+        "imports": {
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"
+        }
+    }
+    </script>
+
+    <!-- Firebase Modules -->
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="firebase-auth.js"></script>
+    <script type="module" src="organization-manager.js"></script>
+    <script type="module" src="firestore-service.js"></script>
+    <script type="module" src="firestore-adapter.js"></script>
+    <script type="module" src="app-init.js"></script>
+
+    <!-- Legacy Scripts (non-module) -->
+    <script src="db-manager.js"></script>
+    <script src="modules.js"></script>
+    <script src="seed-data.js"></script>
+    <script src="api-service.js"></script>
+    <script src="app.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => console.log('✅ Service Worker registered'))
+                    .catch(error => console.error('❌ Service Worker registration failed:', error));
+            });
+        }
+    </script>
+</body>
+</html>

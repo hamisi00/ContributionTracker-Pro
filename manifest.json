@@ -1,0 +1,52 @@
+{
+  "name": "ContributionTracker Pro",
+  "short_name": "ContribPro",
+  "description": "Track financial contributions toward common goals with flexible fund management",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./icons/value.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity", "business"],
+  "lang": "en",
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "New Fund",
+      "short_name": "New Fund",
+      "description": "Create a new contribution fund",
+      "url": "./index.html?action=new-fund",
+      "icons": [{ "src": "./icons/value.png", "sizes": "512x512" }]
+    },
+    {
+      "name": "Add Payment",
+      "short_name": "Payment",
+      "description": "Record a new payment",
+      "url": "./index.html?action=new-payment",
+      "icons": [{ "src": "./icons/value.png", "sizes": "512x512" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "./screenshots/dashboard.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "./screenshots/fund-detail.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "prefer_related_applications": false
+}
